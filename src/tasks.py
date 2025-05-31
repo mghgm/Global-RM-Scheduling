@@ -5,12 +5,18 @@ import numpy as np
 
 from config import SetupConfiguration
 
-
-G = nx.DiGraph()
-G.graph["T"] = random.choice(SetupConfiguration.T_OPTIONS)
-
+# Tasks temporary
+_T = random.choice(SetupConfiguration.T_CHOICES)
 _n = random.randint(*SetupConfiguration.NODES_RANGE)
 _p = SetupConfiguration.P
+
+# Resources
+_nr = random.randint(*SetupConfiguration.RESOURCES_RANGE)
+_total_access = [random.choice(SetupConfiguration.RESOURCE_ACCESS_CHOICES) for _ in range(_nr)]
+
+G = nx.DiGraph()
+G.graph["T"] = _T
+
 for i in range(_n):
     # Add custom attrs
     G.add_node(i, label=f"Node {i}", color='lightblue', size=100)
@@ -78,8 +84,9 @@ for root in root_nodes:
 for leaf in leaf_nodes:
     G.add_edge(leaf, "Sink")
 
-G.graph["C"] = sum([node["c"] for node in G.nodes()])
+G.graph["C"] = sum([G.nodes[i]["c"] for i in G.nodes()])
 G.graph["critical_path"], _ = critical_path_dag(G)
+print(G.graph["critical_path"])
 
 pos = nx.spring_layout(G)
 
