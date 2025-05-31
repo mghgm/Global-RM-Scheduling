@@ -7,4 +7,7 @@ class SetupConfiguration:
     RESOURCES_RANGE = (2, 8)
     RESOURCE_ACCESS_CHOICES = [5, 15, 30, 50]
     
+    U_norm = 0.9
+    CPU_CHOICES = (2,64)
+    
 
