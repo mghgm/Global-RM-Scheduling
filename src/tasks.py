@@ -2,15 +2,15 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-import sys
+from queue import PriorityQueue
 import math
+from copy import deepcopy
 
 from config import SetupConfiguration
 from utils import fixed_sum_random_int, fixed_sum_random_float, uunifast
 
 
 # random.seed(1404)
-# Tasks temporary
 
 class Task():
     def __init__(self, id, utilization, total_access):
@@ -24,13 +24,12 @@ class Task():
         print(f"Task {id}: Number of nodes: {self.n}")
 
         self.G = nx.DiGraph()
-        self.generate_graph()
-        
+        self.generate_graph()        
         
     def generate_graph(self):
         for i in range(self.n):
             # Add custom attrs
-            self.G.add_node(i, label=f"Node {i}", color='lightblue', size=100)
+            self.G.add_node(i, label=f"Node {i}", color='lightblue', size=100, executing=False)
 
         # Generate graph
         for i in range(self.n):
@@ -137,6 +136,76 @@ class Task():
         plt.show()
   
   
+def select_task(tasks, i):
+    for task in tasks:
+        if task.G.number_of_nodes() == 1:
+            tasks.remove(task)
+    if i >= len(tasks):
+        return None
+    sorted(tasks, key=lambda x: x.T)
+    return tasks[i]
+
+def get_runnaable_node(task, resource_status):
+    task.G.remove_nodes_from(["Source"])
+    root_nodes = [node for node in task.G.nodes() if (task.G.in_degree(node) == 0 
+                                                      and node not in ["Sink"]
+                                                      and task.G.nodes[node]["executing"] == False)]
+    removable = []
+    for node in root_nodes:
+        while len(task.G.nodes[node]["times"]) > 0 and task.G.nodes[node]["times"][0] == 0:
+            task.G.nodes[node]["times"].pop(0)
+            task.G.nodes[node]["parts"].pop(0) 
+        if len(task.G.nodes[node]["parts"]) == 0:
+            removable.append(node) 
+            continue  
+        if task.G.nodes[node]["parts"][0] == -1 or resource_status[task.G.nodes[node]["parts"][0]] == 1:
+            task.G.remove_nodes_from(removable)
+            return node, task.G.nodes[node]
+    task.G.remove_nodes_from(removable)
+    return None, None
+    
+  
+def schedule(tasks: list[Task], nr, n_cpus):
+    running_tasks = deepcopy(tasks)
+    resource_status = [1 for _ in range(nr)]
+    hyperperiod = math.lcm(*[task.T for task in tasks]) # type: ignore
+
+    time = 0
+    executing = [None for _ in range(n_cpus)]
+    while time < hyperperiod:
+        for cpu in range(n_cpus):
+            if executing[cpu] is None:
+                node_name = None
+                k = 0
+                while node_name is None and k < len(running_tasks):
+                    to_run = select_task(running_tasks, k)
+                    if to_run is None:
+                        break
+                    node_name, node = get_runnaable_node(to_run, resource_status)
+                    k += 1
+                if node_name is None:
+                    continue
+                
+                executing[cpu] = (to_run, node_name, node)
+                node["executing"] = True
+                
+            if executing[cpu] is not None:
+                to_run, node_name, node = executing[cpu]
+                print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
+
+                node["times"][0] -= 1
+                if node["times"][0] == 0:
+                    node["executing"] = False
+                    node["times"].pop(0)
+                    node["parts"].pop(0)
+                    executing[cpu] = None
+                    if len(node["parts"]) == 0:
+                        to_run.G.remove_node(node_name)
+                        if to_run.G.number_of_nodes() == 1:
+                            running_tasks.remove(to_run)            
+        time += 1
+
+        
 
 if __name__ == "__main__":  
     n_cpus = random.randint(*SetupConfiguration.CPU_CHOICES)
@@ -155,7 +224,6 @@ if __name__ == "__main__":
     utilizations = fixed_sum_random_float(n_cpus, SetupConfiguration.U_norm * n_cpus)
 
     tasks = []
-    resource_status = [1 for _ in range(nr)]
 
     for i in range(n_tasks):
         t = Task(i, utilizations[i], transposed_task_accesses[i])
@@ -166,3 +234,5 @@ if __name__ == "__main__":
         tasks.append(t)
 
         print(f"Critical Path for task {i}: ", t.critical_path_dag())
+    
+    schedule(tasks, nr, n_cpus)
