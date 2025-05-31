@@ -2,9 +2,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+import sys
 
 from config import SetupConfiguration
 
+
+# random.seed(1404)
 # Tasks temporary
 _T = random.choice(SetupConfiguration.T_CHOICES)
 _n = random.randint(*SetupConfiguration.NODES_RANGE)
@@ -13,6 +16,8 @@ _p = SetupConfiguration.P
 # Resources
 _nr = random.randint(*SetupConfiguration.RESOURCES_RANGE)
 _total_access = [random.choice(SetupConfiguration.RESOURCE_ACCESS_CHOICES) for _ in range(_nr)]
+
+print(f"Number of nodes: {_n}, resource types: {_nr}, accesses: {_total_access}")
 
 G = nx.DiGraph()
 G.graph["T"] = _T
@@ -40,11 +45,29 @@ def uunifast(n, total_utilization):
     utilizations.append(sum_u)
     return utilizations
 
+def allocate_resourses(n, total_access):
+    if sum(total_access) < n:
+        print("Not enough resources!")
+        sys.exit(0)
+        
+    resources = [t for t, count in enumerate(total_access) for _ in range(count)]
+    random.shuffle(resources)
+
+    split_indices = sorted(random.sample(range(1, len(resources)), n - 1))
+    split_indices = [0] + split_indices + [len(resources)]
+
+    tasks = [resources[split_indices[i]:split_indices[i+1]] for i in range(n)]
+    return tasks
+
 total_utilization = 0.8
 node_utilizations = uunifast(_n, total_utilization)
-for node, u in zip(G.nodes(), node_utilizations):
+resources = allocate_resourses(_n, _total_access)
+for node, u, r in zip(G.nodes(), node_utilizations, resources):
     G.nodes[node]["u"] = u
     G.nodes[node]["c"] = G.graph["T"] * u
+    G.nodes[node]["resources"] = r
+    print(G.nodes[node])
+
 
 def critical_path_dag(G):
     """Find the longest path (in nodes) in a DAG."""
