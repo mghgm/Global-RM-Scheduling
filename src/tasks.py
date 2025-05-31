@@ -5,6 +5,7 @@ import numpy as np
 import sys
 
 from config import SetupConfiguration
+from utils import fixed_sum_random
 
 
 # random.seed(1404)
@@ -66,6 +67,19 @@ for node, u, r in zip(G.nodes(), node_utilizations, resources):
     G.nodes[node]["u"] = u
     G.nodes[node]["c"] = G.graph["T"] * u
     G.nodes[node]["resources"] = r
+    critical_c = fixed_sum_random(len(r), G.graph["T"] * u * 0.6)
+    normal_c = fixed_sum_random(len(r) + 1, G.graph["T"] * u * 0.4)
+    times, parts = [], []
+    for i in range(2 * len(r) + 1):
+        if i % 2: 
+            times.append(critical_c[i//2])
+            parts.append(r[i//2])
+        else:
+            times.append(normal_c[i//2])
+            parts.append(-1)
+            
+    G.nodes[node]["times"] = times
+    G.nodes[node]["parts"] = parts
     print(G.nodes[node])
 
 
@@ -123,4 +137,4 @@ nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=10)
 
 plt.title("Directed Erdős–Rényi Graph (n=10, p=0.3)")
 plt.axis('off')
-plt.show()
+# plt.show()
