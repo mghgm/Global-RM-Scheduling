@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 import sys
+import math
 
 from config import SetupConfiguration
 from utils import fixed_sum_random
@@ -65,10 +66,11 @@ node_utilizations = uunifast(_n, total_utilization)
 resources = allocate_resourses(_n, _total_access)
 for node, u, r in zip(G.nodes(), node_utilizations, resources):
     G.nodes[node]["u"] = u
-    G.nodes[node]["c"] = G.graph["T"] * u
+    computation_time = int(G.graph["T"] * u)
+    G.nodes[node]["c"] = computation_time
     G.nodes[node]["resources"] = r
-    critical_c = fixed_sum_random(len(r), G.graph["T"] * u * 0.6)
-    normal_c = fixed_sum_random(len(r) + 1, G.graph["T"] * u * 0.4)
+    critical_c = fixed_sum_random(len(r), math.ceil(computation_time * 0.6))
+    normal_c = fixed_sum_random(len(r) + 1, math.floor(computation_time * 0.4))
     times, parts = [], []
     for i in range(2 * len(r) + 1):
         if i % 2: 
