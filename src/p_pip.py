@@ -1,8 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import random
-import numpy as np
-from queue import PriorityQueue
+import sys
 import math
 from copy import deepcopy
 
@@ -143,8 +142,7 @@ def select_task(tasks, i):
             tasks.remove(task)
     if i >= len(tasks):
         return None
-    sorted(tasks, key=lambda x: x.T)
-    return tasks[i]
+    return sorted(tasks, key=lambda x: x.T)[i]
 
 def get_runnaable_node(task, resource_status):
     task.G.remove_nodes_from(["Source"])
@@ -224,13 +222,17 @@ def schedule(tasks: list[Task], nr, n_cpus):
                         if to_run.G.number_of_nodes() == 1:
                             running_tasks.remove(to_run) 
                     if len(rq[ridx]) > 0:
-                        sorted(rq[ridx], key=lambda x: x["priority"])
+                        rq[ridx] = sorted(rq[ridx], key=lambda x: x["priority"])
 
                         executing[cpu] = rq[ridx][0]
                         rq[ridx].pop(0)
         for task in tasks:
             if time % task.T == 0:
-                running_tasks.append(deepcopy(task))           
+                for i in running_tasks:
+                    if time > 0 and i.id == task.id:
+                        print(f"task {i.id} missed deadline at {time}")
+                        sys.exit(1)
+                running_tasks.append(deepcopy(task))          
         time += 1
 
         
