@@ -21,7 +21,7 @@ class Task():
         self.utilization = utilization
         self.total_access = total_access
 
-        print(f"Task {id}: Number of nodes: {self.n}")
+        print(f"Task {id}: Number of nodes: {self.n}, T: {self.T}")
 
         self.G = nx.DiGraph()
         self.generate_graph()        
@@ -202,7 +202,10 @@ def schedule(tasks: list[Task], nr, n_cpus):
                     if len(node["parts"]) == 0:
                         to_run.G.remove_node(node_name)
                         if to_run.G.number_of_nodes() == 1:
-                            running_tasks.remove(to_run)            
+                            running_tasks.remove(to_run) 
+        for task in tasks:
+            if time % task.T == 0:
+                running_tasks.append(deepcopy(task))           
         time += 1
 
         
