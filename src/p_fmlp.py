@@ -1,4 +1,5 @@
 import networkx as nx
+import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import sys
@@ -76,7 +77,7 @@ class Task():
             this_node["resources"] = r
             if len(r) > 0:
                 critical_c = fixed_sum_random_int(len(r), math.ceil(this_node["c"] * self.CSP))
-                normal_c = fixed_sum_random_int(len(r) + 1, math.floor(this_node["c"] * self.CSP))
+                normal_c = fixed_sum_random_int(len(r) + 1, math.floor(this_node["c"] * (1 - self.CSP)))
             else:
                 critical_c = []
                 normal_c = [this_node["c"]]
@@ -209,7 +210,7 @@ def schedule(tasks: list[Task], nr, n_cpus):
                     node["executing"] = True
                 
                 to_run, node_name, node = executing[cpu]
-                print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
+                # print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
 
                 node["times"][0] -= 1
                 if node["times"][0] == 0:
@@ -236,14 +237,33 @@ def schedule(tasks: list[Task], nr, n_cpus):
 
         
 
+
+def get_nth_row_pandas(csv_file, n):
+    df = pd.read_csv(csv_file)
+    if n <= len(df):
+        return df.iloc[n-1]
+    return None
+
 if __name__ == "__main__":  
-    n_cpus = random.randint(*SetupConfiguration.CPU_CHOICES)
-    n_tasks = random.randint(n_cpus//2, n_cpus)
+    if len(sys.argv) > 1:
+        line = int(sys.argv[1])
+        row = get_nth_row_pandas("configs.csv", line)
+        SetupConfiguration.CPU_CHOICES = int(row["m"])
+        SetupConfiguration.N_TASKS = int(row["tasks"])
+        SetupConfiguration.CSP = float(row["CSP"])
+        SetupConfiguration.RESOURCES_RANGE = int(row["n_res"])
+        SetupConfiguration.RESOURCE_ACCESS_CHOICES = [int(row["n_req"])]
+        SetupConfiguration.U_norm = float(row["u"])
+
+
+
+    n_cpus = SetupConfiguration.CPU_CHOICES
+    n_tasks = SetupConfiguration.N_TASKS
 
     print(f"Number of CPUs: {n_cpus}, Number of Tasks: {n_tasks}")
 
     # Resources
-    nr = random.randint(*SetupConfiguration.RESOURCES_RANGE)
+    nr = SetupConfiguration.RESOURCES_RANGE
     rq = [[] for _ in range(nr)]
     total_access = [random.choice(SetupConfiguration.RESOURCE_ACCESS_CHOICES) for _ in range(nr)]
     task_accesses = []

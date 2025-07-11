@@ -206,7 +206,7 @@ def schedule(tasks: list[Task], nr, n_cpus):
                     node["executing"] = True
                 
                 to_run, node_name, node = executing[cpu]
-                print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
+                # print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
 
                 node["times"][0] -= 1
                 if node["times"][0] == 0:
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     # Resources
     nr = random.randint(*SetupConfiguration.RESOURCES_RANGE)
-    total_access = [random.choice(SetupConfiguration.RESOURCE_ACCESS_CHOICES) for _ in range(nr)]
+    total_access = [random.chuice(SetupConfiguration.RESOURCE_ACCESS_CHOICES) for _ in range(nr)]
     task_accesses = []
     for i in range(nr):
         task_accesses.append(fixed_sum_random_int(n_tasks, total_access[i]))
@@ -251,6 +251,6 @@ if __name__ == "__main__":
         t.allocate_resourses()
         tasks.append(t)
 
-        print(f"Critical Path for task {i}: ", t.critical_path_dag())
+        # print(f"Critical Path for task {i}: ", t.critical_path_dag())
     
     schedule(tasks, nr, n_cpus)
