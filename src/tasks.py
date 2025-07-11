@@ -10,7 +10,7 @@ from config import SetupConfiguration
 from utils import fixed_sum_random_int, fixed_sum_random_float, uunifast
 
 
-# random.seed(1404)
+random.seed(1404)
 
 class Task():
     def __init__(self, id, utilization, total_access):
@@ -190,6 +190,21 @@ def schedule(tasks: list[Task], nr, n_cpus):
                 node["executing"] = True
                 
             if executing[cpu] is not None:
+                
+                k = 0
+                node_name = None
+                while node_name is None and k < len(running_tasks):
+                    to_run = select_task(running_tasks, k)
+                    if to_run is None:
+                        break
+                    node_name, node = get_runnaable_node(to_run, resource_status)
+                    # print(node_name, node, k)
+                    k += 1
+                if node_name is not None and to_run.T < executing[cpu][0].T and executing[cpu][2]["parts"][0] == -1: # Preemption
+                    executing[cpu][2]["executing"] = 0
+                    executing[cpu] = (to_run, node_name, node)
+                    node["executing"] = True
+                
                 to_run, node_name, node = executing[cpu]
                 print(f"time: {time}, cpu: {cpu}, id: {to_run.id}, node_name: {node_name}, node: {node}")
 
