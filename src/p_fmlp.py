@@ -20,6 +20,7 @@ class Task():
         self.p = SetupConfiguration.P
         self.utilization = utilization
         self.total_access = total_access
+        self.CSP = SetupConfiguration.CSP
 
         print(f"Task {id}: Number of nodes: {self.n}, T: {self.T}")
 
@@ -74,8 +75,8 @@ class Task():
             this_node = self.G.nodes[node]
             this_node["resources"] = r
             if len(r) > 0:
-                critical_c = fixed_sum_random_int(len(r), math.ceil(this_node["c"] * 0.6))
-                normal_c = fixed_sum_random_int(len(r) + 1, math.floor(this_node["c"] * 0.4))
+                critical_c = fixed_sum_random_int(len(r), math.ceil(this_node["c"] * self.CSP))
+                normal_c = fixed_sum_random_int(len(r) + 1, math.floor(this_node["c"] * self.CSP))
             else:
                 critical_c = []
                 normal_c = [this_node["c"]]

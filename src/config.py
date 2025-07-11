@@ -9,5 +9,6 @@ class SetupConfiguration:
     
     U_norm = 0.9
     CPU_CHOICES = (2,64)
+    CSP = 0.6
     
 
